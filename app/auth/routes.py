@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, flash, request
+from flask import render_template, redirect, url_for, flash, request, jsonify, g
 from werkzeug.urls import url_parse
 from flask_login import login_user, logout_user, current_user
 from app import db
@@ -7,6 +7,7 @@ from app.auth.forms import LoginForm, RegistrationForm, \
     ResetPasswordRequestForm, ResetPasswordForm
 from app.models import User
 from app.auth.email import send_password_reset_email
+from app.auth.utils import generate_token, requires_auth, verify_token
 
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -78,3 +79,25 @@ def reset_password(token):
         flash('Your password has been reset.')
         return redirect(url_for('auth.login'))
     return render_template('auth/reset_password.html', form=form)
+
+@bp.route("/api/create_user", methods=["POST"])
+def create_user():
+    form = request.get_json()
+    user = User(
+        username=form["username"],
+        email=form["email"],
+    )
+    user.set_password(form["password"])
+    db.session.add(user)
+
+    try:
+        db.session.commit()
+    except IntegrityError:
+        return jsonify(message="User with that email or username already exists"), 409
+
+    new_user = User.query.filter_by(username=form["username"]).first()
+
+    return jsonify(
+        id=user.id,
+        token=generate_token(new_user)
+        )

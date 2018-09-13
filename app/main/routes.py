@@ -6,6 +6,9 @@ from app import db
 from app.main.forms import EditProfileForm
 from app.models import User
 from app.main import bp
+from flask_httpauth import HTTPBasicAuth
+
+auth = HTTPBasicAuth()
 
 
 bp.before_app_request
@@ -20,7 +23,8 @@ def before_request():
 @bp.route('/index', methods=['GET'])
 @login_required
 def index():
-    return render_template('index.html', title='Home')
+    userlist = User.query.order_by(User.username).all()
+    return render_template('index.html', title='Home', userlist=userlist)
 
 
 @bp.route('/user/<username>')
@@ -30,6 +34,10 @@ def user(username):
 
 
     return render_template('user.html', user=user)
+
+@bp.route('/api/jenga')
+def jenga():
+    return jsonify({'message': 'Jenga!'})
 
 
 @bp.route('/edit_profile', methods=['GET', 'POST'])

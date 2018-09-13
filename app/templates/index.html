@@ -4,4 +4,10 @@
 {% block app_content %}
     <h1>Hi, {{ current_user.username }}!</h1>
     <br>
+    <div>
+      {% for id in userlist %}
+        <p>{{ id.username }}</p>
+        <p>{{ id.email }}</p>
+      {% endfor %}
+    </div>
 {% endblock %}
